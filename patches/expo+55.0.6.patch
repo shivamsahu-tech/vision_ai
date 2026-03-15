@@ -1,0 +1,35 @@
+diff --git a/node_modules/expo/android/build.gradle b/node_modules/expo/android/build.gradle
+index 6022ad9..52f9e15 100644
+--- a/node_modules/expo/android/build.gradle
++++ b/node_modules/expo/android/build.gradle
+@@ -42,7 +42,7 @@ android {
+   }
+ }
+ 
+-dependencies { dependencyHandler ->
++dependencies {
+   implementation 'com.facebook.react:react-android'
+ 
+   testImplementation 'junit:junit:4.13.2'
+@@ -52,3 +52,20 @@ dependencies { dependencyHandler ->
+   testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2'
+   testImplementation 'org.robolectric:robolectric:4.16'
+ }
++
++// FIX: Merged and safe afterEvaluate block for Gradle 9+
++afterEvaluate {
++  if (project.extensions.findByName('publishing')) {
++    publishing {
++      publications {
++        release(MavenPublication) {
++          try {
++            from components.release
++          } catch (Exception e) {
++            // Fallback if component isn't ready
++          }
++        }
++      }
++    }
++  }
++}
+\ No newline at end of file

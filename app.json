@@ -21,10 +21,20 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.shivamsahu25.vision"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "onnxruntime-react-native",
+      "expo-asset"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "67c0185b-c39b-4ff0-b1b3-ae9d72b33189"
+      }
     }
   }
 }
