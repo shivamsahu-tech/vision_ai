@@ -94,7 +94,7 @@ export const IngestionFunction = async (imageUri: string): Promise<IngestionResu
     const inputTensor: Tensor = await preprocessImage(imageUri);
 
     const results = await visionSession.run({ pixel_values: inputTensor });
-    const outputKey = Object.keys(results)[0]; 
+    const outputKey = Object.keys(results)[0];
     const embeddingArray = Array.from(results[outputKey].data as Float32Array);
     const vectorString = JSON.stringify(embeddingArray);
 
@@ -103,8 +103,11 @@ export const IngestionFunction = async (imageUri: string): Promise<IngestionResu
     // The transaction callback explicitly returns Promise<void>
     // and correctly awaits the tx.execute Promises
     await db.transaction(async (tx: Transaction): Promise<void> => {
-      const result: QueryResult = await tx.execute('INSERT INTO images (uri) VALUES (?)', [imageUri]);
-      
+      const result: QueryResult = await tx.execute(
+        'INSERT INTO images (uri) VALUES (?)',
+        [imageUri]
+      );
+
       if (result.insertId !== undefined) {
         finalInsertedId = result.insertId;
         await tx.execute(
@@ -120,5 +123,28 @@ export const IngestionFunction = async (imageUri: string): Promise<IngestionResu
   } catch (error: any) {
     console.error('❌ Ingestion failed:', error);
     return { success: false, error: error.message };
+  }
+};
+
+export const getAllImages = async (): Promise<any[]> => {
+  try {
+    const result: QueryResult = await db.execute('SELECT * FROM images ORDER BY id DESC');
+    return result.rows || [];
+  } catch (error) {
+    console.error('❌ Failed to fetch images:', error);
+    return [];
+  }
+};
+
+export const deleteImageFromDb = async (id: number): Promise<boolean> => {
+  try {
+    await db.transaction(async (tx: Transaction): Promise<void> => {
+      await tx.execute('DELETE FROM images WHERE id = ?', [id]);
+      await tx.execute('DELETE FROM image_vectors WHERE image_id = ?', [id]);
+    });
+    return true;
+  } catch (error) {
+    console.error(`❌ Failed to delete image ${id}:`, error);
+    return false;
   }
 };

@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { StyleSheet, View, TouchableOpacity, Text, Alert } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import SearchBar from '../components/SearchBar';
-import SortOptions from '../components/SortOptions';
 import GalleryGrid from '../components/GalleryGrid';
 import CameraModal from '../components/CameraModal';
 import { useGallery } from '../hooks/useGallery';
 import { StatusBar } from 'expo-status-bar';
 import ImageView from 'react-native-image-viewing';
+import SimpleToast, { SimpleToastHandle } from '../components/SimpleToast';
 
 const HomeScreen: React.FC = () => {
     const {
@@ -17,34 +17,97 @@ const HomeScreen: React.FC = () => {
         searchQuery,
         isSearching,
         isIngesting,
-        sortType,
+        isRefreshing,
         updateSearchQuery,
         performSearch,
         handleIngest,
-        handleSort,
-        clearSearch
+        handleDelete,
+        clearSearch,
+        refreshGallery
     } = useGallery();
 
     const [isCameraVisible, setIsCameraVisible] = useState(false);
     const [isViewerVisible, setIsViewerVisible] = useState(false);
     const [viewerIndex, setViewerIndex] = useState(0);
     const [numColumns, setNumColumns] = useState(3);
+    const toastRef = useRef<SimpleToastHandle>(null);
 
-    const onCapture = (uri: string) => {
+    const onCapture = async (uri: string) => {
         setIsCameraVisible(false);
-        handleIngest(uri);
+        toastRef.current?.show('Processing image...', 'loading');
+        const result = await handleIngest(uri);
+        if (result?.success) {
+            toastRef.current?.show('Image added successfully!', 'success');
+        } else {
+            toastRef.current?.show('Failed to add image', 'error');
+        }
+    };
+
+    const confirmDelete = (id: string) => {
+        Alert.alert(
+            "Delete Image",
+            "Are you sure you want to remove this image from your vault?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        const result = await handleDelete(id);
+                        if (result.success) {
+                            toastRef.current?.show('Image deleted', 'success');
+                        } else {
+                            toastRef.current?.show('Failed to delete', 'error');
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [4, 3],
+            allowsEditing: false, // Requirement 4: No need to crop
             quality: 1,
+            allowsMultipleSelection: true, // Requirement 6: Batch import
+            selectionLimit: 10, // Requirement 6: Max 10
         });
 
         if (!result.canceled) {
-            handleIngest(result.assets[0].uri);
+            const assets = result.assets;
+            const total = assets.length;
+
+            if (total === 1) {
+                toastRef.current?.show('Processing image...', 'loading');
+                const ingestResult = await handleIngest(assets[0].uri);
+                if (ingestResult?.success) {
+                    toastRef.current?.show('Image added successfully!', 'success');
+                } else {
+                    toastRef.current?.show('Failed to add image', 'error');
+                }
+            } else {
+                toastRef.current?.show(`Starting batch processing of ${total} images`, 'info');
+
+                let successCount = 0;
+                for (let i = 0; i < total; i++) {
+                    toastRef.current?.show(`Processing image ${i + 1}/${total}...`, 'loading');
+                    try {
+                        const ingestResult = await handleIngest(assets[i].uri);
+                        if (ingestResult?.success) {
+                            successCount++;
+                        }
+                    } catch (error) {
+                        console.error(`Error processing image ${i + 1}`, error);
+                    }
+                }
+
+                if (successCount === total) {
+                    toastRef.current?.show(`Successfully added all ${total} images!`, 'success');
+                } else {
+                    toastRef.current?.show(`Batch complete: ${successCount}/${total} images added.`, 'info');
+                }
+            }
         }
     };
 
@@ -59,6 +122,7 @@ const HomeScreen: React.FC = () => {
         <SafeAreaProvider>
             <SafeAreaView style={styles.container}>
                 <StatusBar style="dark" />
+                <SimpleToast ref={toastRef} />
 
                 <SearchBar
                     value={searchQuery}
@@ -68,25 +132,18 @@ const HomeScreen: React.FC = () => {
                     isLoading={isSearching}
                 />
 
-                <SortOptions
-                    currentSort={sortType}
-                    onSortChange={handleSort}
-                />
-
                 <View style={styles.content}>
                     <GalleryGrid
                         images={displayImages}
                         isLoading={isSearching}
+                        isRefreshing={isRefreshing}
+                        onRefresh={refreshGallery}
                         numColumns={numColumns}
                         onColumnsChange={setNumColumns}
                         onImagePress={openViewer}
+                        onImageDelete={confirmDelete}
+                        onAddPress={pickImage}
                     />
-
-                    {isIngesting && (
-                        <View style={styles.toast}>
-                            <Text style={styles.toastText}>Processing image...</Text>
-                        </View>
-                    )}
                 </View>
 
                 <View style={styles.fabContainer}>
@@ -166,20 +223,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 4,
-    },
-    toast: {
-        position: 'absolute',
-        top: 20,
-        alignSelf: 'center',
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        borderRadius: 20,
-        zIndex: 100,
-    },
-    toastText: {
-        color: '#fff',
-        fontWeight: '600',
     },
 });
 
