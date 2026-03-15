@@ -26,11 +26,13 @@ export const useGallery = () => {
         setDisplayImages(mockImages);
     }, []);
 
-    const handleSearch = useCallback(async (query: string) => {
+    const updateSearchQuery = useCallback((query: string) => {
         setSearchQuery(query);
-        
+    }, []);
+
+    const performSearch = useCallback(async () => {
         // If query is cleared, instantly revert to full gallery
-        if (!query.trim()) {
+        if (!searchQuery.trim()) {
             setDisplayImages(allImages);
             return;
         }
@@ -38,7 +40,7 @@ export const useGallery = () => {
         setIsSearching(true);
         try {
             // Call the strictly typed SearchFunction
-            const response = await SearchFunction(query);
+            const response = await SearchFunction(searchQuery);
             
             if (response.success && response.results) {
                 // Map the DB search results back into your UI's GalleryImage type
@@ -57,7 +59,7 @@ export const useGallery = () => {
         } finally {
             setIsSearching(false);
         }
-    }, [allImages]);
+    }, [searchQuery, allImages]);
 
     const handleIngest = useCallback(async (uri: string) => {
         setIsIngesting(true);
@@ -114,7 +116,8 @@ export const useGallery = () => {
         isSearching,
         isIngesting,
         sortType,
-        handleSearch,
+        updateSearchQuery,
+        performSearch,
         handleIngest,
         handleSort,
         clearSearch

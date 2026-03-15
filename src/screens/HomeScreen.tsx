@@ -18,7 +18,8 @@ const HomeScreen: React.FC = () => {
         isSearching,
         isIngesting,
         sortType,
-        handleSearch,
+        updateSearchQuery,
+        performSearch,
         handleIngest,
         handleSort,
         clearSearch
@@ -61,8 +62,8 @@ const HomeScreen: React.FC = () => {
 
                 <SearchBar
                     value={searchQuery}
-                    onChangeText={handleSearch}
-                    onSubmit={() => handleSearch(searchQuery)}
+                    onChangeText={updateSearchQuery}
+                    onSubmit={performSearch}
                     onClear={clearSearch}
                     isLoading={isSearching}
                 />

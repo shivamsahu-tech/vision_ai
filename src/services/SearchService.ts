@@ -42,6 +42,8 @@ export const SearchFunction = async (searchQuery: string): Promise<SearchRespons
       truncation: true,
     });
 
+    console.log('Tokenization complete:', tokenized);
+
     // 3. THE CRASH FIX: Standard Array + BigInt 
     // We avoid 'new BigInt64Array()' because it crashes the Hermes bridge on many Android devices.
     // Instead, we pass a plain array of BigInts; the C++ layer handles the packing.
