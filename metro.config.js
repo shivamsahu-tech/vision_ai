@@ -1,9 +1,8 @@
 const { getDefaultConfig } = require('expo/metro-config');
-
-/** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
-// Explicitly tell Metro to bundle .ort and .json files into the final APK/IPA
-config.resolver.assetExts.push('ort', 'json');
+// 1. Move 'json' from sourceExts to assetExts
+config.resolver.sourceExts = config.resolver.sourceExts.filter(ext => ext !== 'json');
+config.resolver.assetExts.push('json', 'ort');
 
 module.exports = config;
