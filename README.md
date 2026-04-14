@@ -1,8 +1,8 @@
-# VisionVault: On-Device AI Image Search Engine
+# Vision AI: On-Device AI Image Search Engine
 
 ## download Url : [https://github.com/shivamsahu-tech/vision_ai/releases/download/vision_ai/vision_ai.apk](https://github.com/shivamsahu-tech/vision_ai/releases/download/vision_ai/vision_ai.apk)
 
-**VisionVault** is a high-performance, privacy-first mobile application built with React Native and Expo that enables semantic image search using fully on-device AI. By integrating advanced machine learning models and vector databases directly into the mobile runtime, VisionVault allows users to search their local image gallery using natural language queries without ever sending data to the cloud.
+**Vision AI** is a high-performance, privacy-first mobile application built with React Native and Expo that enables semantic image search using fully on-device AI. By integrating advanced machine learning models and vector databases directly into the mobile runtime, Vision AI allows users to search their local image gallery using natural language queries without ever sending data to the cloud.
 
 ## 🚀 Key Features
 
@@ -13,7 +13,7 @@
 
 ## 🛠️ Technical Architecture
 
-VisionVault implements a modern AI pipeline adapted for the constraints of mobile environments:
+Vision AI implements a modern AI pipeline adapted for the constraints of mobile environments:
 
 ### 1. The Embedding Pipeline (CLIP)
 The core of the application uses the **CLIP (Contrastive Language-Image Pre-training)** architecture. 
@@ -27,7 +27,7 @@ Inference is handled by `onnxruntime-react-native`.
 - **Solution**: Implemented a **Custom Fetch Interceptor** for `@xenova/transformers` that redirects model/tokenizer requests to the local Expo asset system, enabling a strictly air-gapped search experience.
 
 ### 3. Vector Database
-Instead of a traditional flat-file or purely relational approach, VisionVault uses `@op-engineering/op-sqlite` with the **sqlite-vec** extension.
+Instead of a traditional flat-file or purely relational approach, Vision AI uses `@op-engineering/op-sqlite` with the **sqlite-vec** extension.
 - **Schema**: Stores image metadata alongside high-dimensional float arrays (embeddings).
 - **Indexing**: Uses vector distance functions (Cosine Similarity) directly in SQL queries for sub-millisecond retrieval.
 

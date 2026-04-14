@@ -14,7 +14,7 @@ export default function App() {
   useEffect(() => {
     async function prepareEnvironment() {
       try {
-        console.log("Booting VisionVault Environment...");
+        console.log("Booting Vision AI Environment...");
 
         // 2. Initialize the sqlite-vec database tables
         await setupDatabase();
