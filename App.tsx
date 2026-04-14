@@ -3,6 +3,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import HomeScreen from "./src/screens/HomeScreen";
 import { setupDatabase } from './src/services/IngestionService';
 import { initializeLocalModels } from './src/ai/modelManager';
+import { initializeTokenizerAssets } from './src/services/SearchService';
 
 // 1. Tell Expo to keep the splash screen visible while we load the AI
 SplashScreen.preventAutoHideAsync();
@@ -20,6 +21,9 @@ export default function App() {
 
         // 3. Load the 8-bit ONNX Vision and Text models into RAM
         await initializeLocalModels();
+
+        // 4. Pre-load the tokenizer JSON files into memory for offline search
+        await initializeTokenizerAssets();
 
       } catch (error) {
         console.error("Critical Failure during initialization:", error);

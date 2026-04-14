@@ -2,12 +2,68 @@ import { open, QueryResult } from '@op-engineering/op-sqlite';
 import { Tensor } from 'onnxruntime-react-native';
 import { getTextSession } from '../ai/modelManager';
 import { AutoTokenizer, env } from '@xenova/transformers';
+import { Buffer } from 'buffer';
 
-// Configure transformers to stay in-memory/cache only
-env.allowLocalModels = false; 
+// ---------------------------------------------------------------------------
+// HOW THIS WORKS:
+// @xenova/transformers resolves model files via its `customCache` hook.
+// In React Native, the global fetch() cannot load local file:// paths, so
+// the library's own file-loading path fails.  The fix: put JSON back in
+// Metro's sourceExts (its default), so require() returns the parsed JS object
+// synchronously.  We JSON.stringify() it once at module load, then serve the
+// string from customCache.match() — zero networking, zero async file I/O.
+// ---------------------------------------------------------------------------
+
+// Synchronously populate the tokenizer content map at module-load time.
+// require() returns the parsed JS object when JSON is in Metro sourceExts.
+const _tokenizerData: Record<string, string> = {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  'tokenizer.json': JSON.stringify(require('../../assets/models/tokenizer.json')),
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  'tokenizer_config.json': JSON.stringify(require('../../assets/models/tokenizer_config.json')),
+};
+
+console.log('[Transformers] Tokenizer data loaded synchronously at module init.');
+
+// Configure transformers for offline-only use
+env.allowLocalModels = true;
+env.allowRemoteModels = false;
 env.backends.onnx.wasm.wasmPaths = {};
 
+// Serve tokenizer files from the in-memory map — no network needed
+env.useCustomCache = true;
+env.customCache = {
+  match: async (request: string) => {
+    const isTokenizer = request.endsWith('tokenizer.json') && !request.endsWith('tokenizer_config.json');
+    const isConfig = request.endsWith('tokenizer_config.json');
+    const key = isTokenizer ? 'tokenizer.json' : isConfig ? 'tokenizer_config.json' : null;
+
+    if (key && _tokenizerData[key]) {
+      console.log(`[Transformers] ✅ Serving from module cache: ${key}`);
+      const fileData = _tokenizerData[key];
+      return {
+        status: 200,
+        statusText: 'OK',
+        headers: new Headers({ 'content-type': 'application/json' }),
+        arrayBuffer: async () => {
+          const buf = Buffer.from(fileData, 'utf-8');
+          return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+        },
+      } as any;
+    }
+
+    return undefined; // Not a tokenizer file — let library handle it
+  },
+  put: async () => { return; },
+};
+
+// No-op kept for API compatibility — loading is now synchronous at module init
+export const initializeTokenizerAssets = async (): Promise<void> => {
+  console.log('[Transformers] ✅ Tokenizer assets already loaded (synchronous module init).');
+};
+
 const db = open({ name: 'vision_vault.sqlite' });
+
 
 export interface SearchResult {
   uri: string;
@@ -61,8 +117,8 @@ export const SearchFunction = async (searchQuery: string): Promise<SearchRespons
     const outputKey = Object.keys(results)[0]; 
     const textEmbeddingArray = Array.from(results[outputKey].data as Float32Array);
     
-    // 5. Execute Vector Search
-    // Use cosine distance for similarity
+    // 5. Execute Vector Search — all results, most relevant first
+    // Cosine distance: lower value = more similar, so ASC = best match at top
     const dbResult: QueryResult = await db.execute(`
       SELECT 
         images.uri,
@@ -70,7 +126,6 @@ export const SearchFunction = async (searchQuery: string): Promise<SearchRespons
       FROM image_vectors
       JOIN images ON images.id = image_vectors.image_id
       ORDER BY distance ASC
-      LIMIT 10
     `, [JSON.stringify(textEmbeddingArray)]);
 
     if (dbResult.rows && dbResult.rows.length > 0) {
