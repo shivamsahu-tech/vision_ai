@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text, Alert } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Text, Alert, Linking } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -147,6 +147,13 @@ const HomeScreen: React.FC = () => {
                 </View>
 
                 <View style={styles.fabContainer}>
+                    <TouchableOpacity
+                        style={styles.galleryFab}
+                        onPress={() => Linking.openURL('https://drive.google.com/file/d/1r1Y9a8DnQ7r1Lx2UKfHoFls2hrL2ybf9/view?usp=drivesdk')}
+                    >
+                        <Ionicons name="play-circle" size={24} color="#FF3B30" />
+                    </TouchableOpacity>
+
                     <TouchableOpacity
                         style={styles.galleryFab}
                         onPress={pickImage}

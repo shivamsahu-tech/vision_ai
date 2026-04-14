@@ -1,6 +1,10 @@
 # Vision AI: On-Device AI Image Search Engine
 
-## download Url : [https://github.com/shivamsahu-tech/vision_ai/releases/download/vision_ai/vision_ai.apk](https://github.com/shivamsahu-tech/vision_ai/releases/download/vision_ai/vision_ai.apk)
+## download Url : [https://github.com/shivamsahu-tech/vision_ai/releases/download/vision_ai/vision_ai.apk [300 MB]](https://github.com/shivamsahu-tech/vision_ai/releases/download/vision_ai/vision_ai.apk)
+
+## 🎥 Demo Video : [Watch Demo](https://drive.google.com/file/d/1r1Y9a8DnQ7r1Lx2UKfHoFls2hrL2ybf9/view?usp=drivesdk)
+
+### If you have any suggestion, feel free to mail me, or create an issue.
 
 **Vision AI** is a high-performance, privacy-first mobile application built with React Native and Expo that enables semantic image search using fully on-device AI. By integrating advanced machine learning models and vector databases directly into the mobile runtime, Vision AI allows users to search their local image gallery using natural language queries without ever sending data to the cloud.
 
